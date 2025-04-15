@@ -1,8 +1,8 @@
 import datetime
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
-from frappe.utils import add_days, nowdate
+from frappe.tests import IntegrationTestCase
+from frappe.utils import add_days, add_months, nowdate
 
 from erpnext.selling.doctype.sales_order.sales_order import make_sales_invoice
 from erpnext.selling.doctype.sales_order.test_sales_order import make_sales_order
@@ -11,10 +11,16 @@ from erpnext.selling.report.payment_terms_status_for_sales_order.payment_terms_s
 )
 from erpnext.stock.doctype.item.test_item import create_item
 
-test_dependencies = ["Sales Order", "Item", "Sales Invoice", "Payment Terms Template", "Customer"]
+EXTRA_TEST_RECORD_DEPENDENCIES = [
+	"Sales Order",
+	"Item",
+	"Sales Invoice",
+	"Payment Terms Template",
+	"Customer",
+]
 
 
-class TestPaymentTermsStatusForSalesOrder(FrappeTestCase):
+class TestPaymentTermsStatusForSalesOrder(IntegrationTestCase):
 	def tearDown(self):
 		frappe.db.rollback()
 
@@ -139,6 +145,9 @@ class TestPaymentTermsStatusForSalesOrder(FrappeTestCase):
 			)
 			doc.insert()
 
+	@IntegrationTestCase.change_settings(
+		"Accounts Settings", allow_multi_currency_invoices_against_single_party_account=1
+	)
 	def test_02_alternate_currency(self):
 		transaction_date = "2021-06-15"
 		self.create_payment_terms_template()
@@ -348,7 +357,7 @@ class TestPaymentTermsStatusForSalesOrder(FrappeTestCase):
 		item = create_item(item_code="_Test Excavator 1", is_stock_item=0)
 		transaction_date = nowdate()
 		so = make_sales_order(
-			transaction_date=add_days(transaction_date, -30),
+			transaction_date=add_months(transaction_date, -1),
 			delivery_date=add_days(transaction_date, -15),
 			item=item.item_code,
 			qty=10,
@@ -369,13 +378,15 @@ class TestPaymentTermsStatusForSalesOrder(FrappeTestCase):
 		sinv.items[0].qty = 6
 		sinv.insert()
 		sinv.submit()
+
+		first_due_date = add_days(add_months(transaction_date, -1), 15)
 		columns, data, message, chart = execute(
 			frappe._dict(
 				{
 					"company": "_Test Company",
 					"item": item.item_code,
-					"from_due_date": add_days(transaction_date, -30),
-					"to_due_date": add_days(transaction_date, -15),
+					"from_due_date": add_months(transaction_date, -1),
+					"to_due_date": first_due_date,
 				}
 			)
 		)
@@ -384,11 +395,11 @@ class TestPaymentTermsStatusForSalesOrder(FrappeTestCase):
 			{
 				"name": so.name,
 				"customer": so.customer,
-				"submitted": datetime.date.fromisoformat(add_days(transaction_date, -30)),
+				"submitted": datetime.date.fromisoformat(add_months(transaction_date, -1)),
 				"status": "Completed",
 				"payment_term": None,
 				"description": "_Test 50-50",
-				"due_date": datetime.date.fromisoformat(add_days(transaction_date, -15)),
+				"due_date": datetime.date.fromisoformat(first_due_date),
 				"invoice_portion": 50.0,
 				"currency": "INR",
 				"base_payment_amount": 500000.0,

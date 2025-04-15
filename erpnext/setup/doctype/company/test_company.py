@@ -1,23 +1,29 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
-
 import json
 import unittest
 
 import frappe
 from frappe import _
+from frappe.tests import IntegrationTestCase
 from frappe.utils import random_string
 
 from erpnext.accounts.doctype.account.chart_of_accounts.chart_of_accounts import (
 	get_charts_for_country,
 )
+from erpnext.setup.doctype.company.company import get_default_company_address
 
-test_ignore = ["Account", "Cost Center", "Payment Terms Template", "Salary Component", "Warehouse"]
-test_dependencies = ["Fiscal Year"]
-test_records = frappe.get_test_records("Company")
+IGNORE_TEST_RECORD_DEPENDENCIES = [
+	"Account",
+	"Cost Center",
+	"Payment Terms Template",
+	"Salary Component",
+	"Warehouse",
+]
+EXTRA_TEST_RECORD_DEPENDENCIES = ["Fiscal Year"]
 
 
-class TestCompany(unittest.TestCase):
+class TestCompany(IntegrationTestCase):
 	def test_coa_based_on_existing_company(self):
 		company = frappe.new_doc("Company")
 		company.company_name = "COA from Existing Company"
@@ -109,7 +115,7 @@ class TestCompany(unittest.TestCase):
 		max_rgt = frappe.db.sql("select max(rgt) from `tabCompany`")[0][0]
 
 		if not records:
-			records = test_records[2:]
+			records = self.globalTestRecords["Company"][2:]
 
 		for company in records:
 			lft, rgt, parent_company = frappe.db.get_value(
@@ -131,6 +137,38 @@ class TestCompany(unittest.TestCase):
 			self.assertTrue(rgt < parent_rgt)
 			self.assertTrue(lft >= min_lft)
 			self.assertTrue(rgt <= max_rgt)
+
+	def test_primary_address(self):
+		company = "_Test Company"
+
+		secondary = frappe.get_doc(
+			{
+				"address_title": "Non Primary",
+				"doctype": "Address",
+				"address_type": "Billing",
+				"address_line1": "Something",
+				"city": "Mumbai",
+				"state": "Maharashtra",
+				"country": "India",
+				"is_primary_address": 1,
+				"pincode": "400098",
+				"links": [
+					{
+						"link_doctype": "Company",
+						"link_name": company,
+					}
+				],
+			}
+		)
+		secondary.insert()
+		self.addCleanup(secondary.delete)
+
+		primary = frappe.copy_doc(secondary)
+		primary.is_primary_address = 1
+		primary.insert()
+		self.addCleanup(primary.delete)
+
+		self.assertEqual(get_default_company_address(company), primary.name)
 
 	def get_no_of_children(self, company):
 		def get_no_of_children(companies, no_of_children):
@@ -161,6 +199,22 @@ class TestCompany(unittest.TestCase):
 		child_company.parent_company = "_Test Company 4"
 		child_company.save()
 		self.test_basic_tree()
+
+	def test_demo_data(self):
+		from erpnext.setup.demo import clear_demo_data, setup_demo_data
+
+		setup_demo_data()
+		company_name = frappe.db.get_value("Company", {"name": ("like", "%(Demo)")})
+		self.assertTrue(company_name)
+
+		for transaction in frappe.get_hooks("demo_transaction_doctypes"):
+			self.assertTrue(frappe.db.exists(frappe.unscrub(transaction), {"company": company_name}))
+
+		clear_demo_data()
+		company_name = frappe.db.get_value("Company", {"name": ("like", "%(Demo)")})
+		self.assertFalse(company_name)
+		for transaction in frappe.get_hooks("demo_transaction_doctypes"):
+			self.assertFalse(frappe.db.exists(frappe.unscrub(transaction), {"company": company_name}))
 
 
 def create_company_communication(doctype, docname):

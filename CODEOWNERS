@@ -3,26 +3,22 @@
 # These owners will be the default owners for everything in
 # the repo. Unless a later match takes precedence,
 
-erpnext/accounts/               @nextchamp-saqib @deepeshgarg007 @ruthra-kumar
-erpnext/assets/                 @nextchamp-saqib @deepeshgarg007 @ruthra-kumar
-erpnext/loan_management/        @nextchamp-saqib @deepeshgarg007
-erpnext/regional                @nextchamp-saqib @deepeshgarg007 @ruthra-kumar
-erpnext/selling                 @nextchamp-saqib @deepeshgarg007 @ruthra-kumar
-erpnext/support/                @nextchamp-saqib @deepeshgarg007
-pos*                            @nextchamp-saqib
+erpnext/accounts/               @ruthra-kumar
+erpnext/assets/                 @khushi8112
+erpnext/regional                @ruthra-kumar
+erpnext/selling                 @ruthra-kumar
+erpnext/support/                @ruthra-kumar
+pos*                            
 
-erpnext/buying/                 @rohitwaghchaure @s-aga-r
-erpnext/maintenance/            @rohitwaghchaure @s-aga-r
-erpnext/manufacturing/          @rohitwaghchaure @s-aga-r
-erpnext/quality_management/     @rohitwaghchaure @s-aga-r
-erpnext/stock/                  @rohitwaghchaure @s-aga-r
+erpnext/buying/                 @rohitwaghchaure
+erpnext/maintenance/            @rohitwaghchaure
+erpnext/manufacturing/          @rohitwaghchaure
+erpnext/quality_management/     @rohitwaghchaure
+erpnext/stock/                  @rohitwaghchaure
+erpnext/subcontracting          @rohitwaghchaure
 
-erpnext/crm/                    @NagariaHussain
-erpnext/education/              @rutwikhdev
-erpnext/projects/               @ruchamahabal
+erpnext/controllers/            @ruthra-kumar @rohitwaghchaure
+erpnext/patches/                @ruthra-kumar
 
-erpnext/controllers/            @deepeshgarg007 @nextchamp-saqib @rohitwaghchaure
-erpnext/patches/                @deepeshgarg007 @nextchamp-saqib
-
-.github/                        @ankush
-pyproject.toml                  @ankush
+.github/                        @ruthra-kumar
+pyproject.toml                  @akhilnarang
